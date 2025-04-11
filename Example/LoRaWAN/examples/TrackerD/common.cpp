@@ -779,6 +779,10 @@ void SYS::config_Write(void)
   data_8 = mod;
   DATA.writeUChar(addr1, data_8);
   addr1 += sizeof(unsigned char);
+  //fix
+  data_8 = fix;
+  DATA.writeUChar(addr1, data_8);
+  addr1 += sizeof(unsigned char);
   //lon
   data_8 = lon;
   DATA.writeUChar(addr1, data_8);
@@ -1057,6 +1061,9 @@ void SYS::config_Read(void)
   addr1 += sizeof(unsigned char);
   //mod
   mod = DATA.readUChar(addr1);
+  addr1 += sizeof(unsigned char);
+  //fix
+  fix = DATA.readUChar(addr1);
   addr1 += sizeof(unsigned char);
   //lon
   lon = DATA.readUChar(addr1);
