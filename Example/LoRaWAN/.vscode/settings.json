@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "lmic_config_preconditions.h": "c",
+        "lmic.h": "c"
+    }
+}
