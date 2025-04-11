@@ -1499,6 +1499,7 @@ void loop() {
 void gps_send(void)
 {
   Serial.println("gps_send function beginning");
+  // This is being set to true one time and then never again meaning it is not reachin GPS_DATA()
   if(sys.gps_work_flag == true)
   {
     Serial.println("sys.gps_work_flag = True");

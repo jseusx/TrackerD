@@ -46,7 +46,6 @@ bool GPS_DATA(void)
 {
   //bool gpsValid = false;
   //unsigned long currentTime = millis();
-  
   while (SerialGPS.available() > 0)
   {
     Serial.printf("sys.fix in GPS.cpp = %d\n", sys.fix);
