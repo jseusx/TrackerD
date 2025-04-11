@@ -75,6 +75,7 @@ class SYS:public LORA
     uint32_t    sys_time = 1200000; //uint:ms
     uint8_t     mod = 0;
     uint8_t     lon = 1;      //1:on  2:0ff
+    uint8_t     fix = 0;      //1:send uplink without GPS  2:0ff/default
     uint32_t    Positioning_time = 180000;
     uint32_t    cdevaddr = 0;
     uint32_t    ble_tdc = 5;
@@ -170,6 +171,7 @@ class Sensor
     int hour_gps = 0;
     int minute_gps = 0;
     int second_gps = 0;
+    int fix = 0;
     float pdop_gps ; 
     int Fix_Status;   
     int16_t x=0;
