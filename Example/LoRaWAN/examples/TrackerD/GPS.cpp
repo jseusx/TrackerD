@@ -46,6 +46,7 @@ bool GPS_DATA(void)
 {
   while (SerialGPS.available() > 0)
   {
+    Serial.println("Inside GPS_data and Serial.GPS > 0");
     if (gps.encode(SerialGPS.read()))
     {
 //    Every time anything is updated, print everything.
@@ -184,6 +185,7 @@ bool GPS_DATA(void)
         }
         else
         {  
+          Serial.println("Entering else statement ---- GPS.cpp ----");
           if(sys.lon == 1)
           {
               if(sys.sensor_type == 22)  
