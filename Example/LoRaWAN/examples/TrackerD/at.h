@@ -421,6 +421,17 @@ static const struct ATCommand_s ATCommand[] =
     .set = at_lon_set,
     .run = at_return_error,
   },
+/**************** AT+FIX ****************/  
+{
+  .string = AT FIX,
+  .size_string = sizeof(FIX) - 1,
+#ifndef NO_HELP
+  .help_string = AT FIX "     : Enable/Disable Uplink without GPS",
+#endif
+  .get = at_fix_get,
+  .set = at_fix_set,
+  .run = at_return_error,
+},
   
 /**************** AT+CHE ****************/  
   {
