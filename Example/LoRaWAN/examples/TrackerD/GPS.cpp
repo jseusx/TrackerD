@@ -214,15 +214,14 @@ bool GPS_DATA(void)
                  delay(100);             
               }
           }
-          // 
+          // This if statement will only activate when no fix has been found and when sys.fix = 1.
           if(sys.fix == 1)
           {
             // placeholders for gps data will be empty
             sensor.latitude = 0;
             sensor.longitude = 0;
 
-            // 1st if statement seems to always only activate when no gps is found.
-            Serial.println("No GPS fix, sending placeholder data. ---- GPS.cpp ----");
+            Serial.println("No GPS fix, sending placeholder data.");
 
             return true;
           }
