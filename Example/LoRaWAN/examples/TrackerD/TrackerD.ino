@@ -1587,7 +1587,7 @@ void gps_send(void)
   {
     if(GPS_DATA() == true )
     {
-      Serial.println("GPS_DATA = true ---- TrackerD.ino ----");
+      // Serial.println("GPS_DATA = true ---- TrackerD.ino ----");
       os_JOINED_flag = 0;
       sys.gps_work_flag = false;
       if(sys.Positioning_time != 0)
