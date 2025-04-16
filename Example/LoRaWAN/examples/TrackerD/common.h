@@ -171,7 +171,6 @@ class Sensor
     int hour_gps = 0;
     int minute_gps = 0;
     int second_gps = 0;
-    int fix = 0;
     float pdop_gps ; 
     int Fix_Status;   
     int16_t x=0;

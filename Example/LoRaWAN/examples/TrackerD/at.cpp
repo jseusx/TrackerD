@@ -542,6 +542,7 @@ ATEerror_t at_lon_set(const char *param)
   sys.lon = is_on;
   return AT_OK;
 }
+
 /**************       AT_FIX       **************/
 ATEerror_t at_fix_get(const char *param)
 {
