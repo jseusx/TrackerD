@@ -222,7 +222,7 @@ bool GPS_DATA(void)
             sensor.longitude = 0;
 
             // 1st if statement seems to always only activate when no gps is found.
-            Serial.println("No GPS fix, sending placeholder data.");
+            Serial.println("No GPS fix, sending placeholder data. ---- GPS.cpp ----");
 
             return true;
           }
