@@ -35,6 +35,10 @@
 #define CUSTOM_MOVE_DETECT_MODE     0x03
 #define GXHT3x_MODE                 0x04
 
+// Buffer size for circular buffer
+//#define BUFFER_SIZE 10 // Number of packets the buffer can hold
+//#define PACKET_SIZE 50 // Size of each packet
+
 class SYS:public LORA
 {
   public:   
@@ -178,9 +182,17 @@ class Sensor
     int16_t z=0;
 };
 
+/*struct CircularBuffer {
+  uint8_t data[BUFFER_SIZE][PACKET_SIZE]; // Buffer to hold packets
+  int head; // Index of the next packet to send
+  int tail; // Index of the next empty slot
+  int count; // Number of packets in the buffer
+};*/
+
 extern SYS sys;
 extern Sensor sensor;
 extern Devicet devicet;
+//extern CircularBuffer;
 
 int BatGet(void);
 void buzzer(void);
