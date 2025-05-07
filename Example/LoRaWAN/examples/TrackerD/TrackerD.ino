@@ -2304,440 +2304,472 @@ void LIS3DH_configIntterupts(void)
 
 static void LORA_RxData(uint8_t *AppData, uint8_t AppData_Len)
 {
-  bool store_flag = false;
-  if(sys.lon == 1)
-  {
-    digitalWrite(LED_PIN_GREEN, HIGH);
-    delay(1000); 
-    digitalWrite(LED_PIN_GREEN, LOW); 
-  }    
-  switch (AppData[0] & 0xff)
-  {
-    case 0x01:
+    bool store_flag = false;
+if(sys.lon == 1)
     {
-      if (AppData_Len == 4) //---->AT+TDC
-      {
-        uint32_t ServerSetTDC = (AppData[1] << 16 | AppData[2] << 8 | AppData[3]); // S
-        if (ServerSetTDC < 6)
-        {
-          Serial.println("Invalid parameter");
-        }
-        else
-        {
-          store_flag = true;
-          sys.tdc = ServerSetTDC * 1000;
-          sys.sys_time = ServerSetTDC * 1000;         
-        }
-      }
-    }
-    break;   
-    case 0x02:
+        digitalWrite(LED_PIN_GREEN, HIGH);
+        delay(1000); 
+        digitalWrite(LED_PIN_GREEN, LOW); 
+    }    
+
+    switch (AppData[0] & 0xff)
     {
-      store_flag = true;
-      if(( AppData_Len == 2 )&&(AppData[1]==0x01)) //Exit Alarm
-      {
-          sys.gps_alarm = 0;
-          sys.gps_start = 2;
-          sys.alarm = 0;
-          sys.alarm_count =0;
-          sys.gps_work_flag = false;
-          sys.config_Write(); 
-          if(sys.lon == 1)
-          {
-            if(sys.sensor_type == 22)  
-            {              
-              digitalWrite(LED_PIN_BLUE1, HIGH);
+        case 0x01:
+        {
+            if (AppData_Len == 4) //---->AT+TDC
+            {
+                uint32_t ServerSetTDC = (AppData[1] << 16 | AppData[2] << 8 | AppData[3]); // S
+                if (ServerSetTDC < 6)
+                {
+                    Serial.println("Invalid parameter");
+                }
+                else
+                {
+                    store_flag = true;
+                    sys.tdc = ServerSetTDC * 1000;
+                    sys.sys_time = ServerSetTDC * 1000;         
+                }
+            }
+        }
+        break;   
+        case 0x02:
+        {
+            store_flag = true;
+            if(( AppData_Len == 2 )&&(AppData[1]==0x01)) //Exit Alarm
+            {
+                sys.gps_alarm = 0;
+                sys.gps_start = 2;
+                sys.alarm = 0;
+                sys.alarm_count =0;
+                sys.gps_work_flag = false;
+                sys.config_Write(); 
+                if(sys.lon == 1)
+                {
+                    if(sys.sensor_type == 22)  
+                    {              
+                        digitalWrite(LED_PIN_BLUE1, HIGH);
+                    }
+                    else
+                    {
+                        digitalWrite(LED_PIN_BLUE, HIGH);             
+                    }
+                    if (millis() - Exit_Alarm > 5000)
+                    {
+                        if(sys.sensor_type == 22)  
+                        {              
+                            digitalWrite(LED_PIN_BLUE1, LOW);
+                        }
+                        else
+                        {
+                            digitalWrite(LED_PIN_BLUE, LOW);             
+                        }
+                        Exit_Alarm = millis();
+                    }   
+                } 
+                if(sys.Intwk == 1)
+                {
+                    LIS3DH_configIntterupts();
+                    sys.keep_flag = 0;         
+                }           
+                Serial.println("Exit Alarm");          
+            }
+            if(( AppData_Len == 2 )&&(AppData[1]==0x02)) 
+            {
+                buzzer(); 
+                //sys.device_flag =1;
+                sys.gps_work_flag=false; 
+                sys.collect_sensor_flag=false; 
+                os_run_flag=false;
+                os_JOINED_flag = 1  ;
+                
+                if(sys.sensor_type == 22)  
+                {              
+                    digitalWrite(LED_PIN_RED1, HIGH);
+                    delay(1000); 
+                    digitalWrite(LED_PIN_RED1, LOW);
+                }
+                else
+                {
+                    digitalWrite(LED_PIN_RED, HIGH);
+                    delay(1000); 
+                    digitalWrite(LED_PIN_RED, LOW);                
+                }  
+                Stop_buzzer();          
+            }
+            if(( AppData_Len == 2 )&&(AppData[1]==0x03)) 
+            {
+                buzzer();          
+                if(sys.sensor_type == 22)  
+                {              
+                    digitalWrite(LED_PIN_RED1, HIGH);
+                    delay(1000); 
+                    digitalWrite(LED_PIN_RED1, LOW);
+                }
+                else
+                {
+                    digitalWrite(LED_PIN_RED, HIGH);
+                    delay(1000); 
+                    digitalWrite(LED_PIN_RED, LOW);                
+                }  
+                delay(29000);
+                Stop_buzzer();          
+            }      
+        }
+        break;  
+        case 0x03:
+        {
+            if (AppData_Len == 4) //---->AT+MTDC
+            {
+                uint32_t ServerSetTDC = (AppData[1] << 16 | AppData[2] << 8 | AppData[3]); // S
+                if (ServerSetTDC < 6)
+                {
+                    Serial.println("Invalid parameter");
+                }
+                else
+                {
+                    store_flag = true;
+                    sys.mtdc = ServerSetTDC * 1000;
+                }
+            }
+        }
+        break;       
+        case 0x04:
+        {
+            if (AppData_Len == 2 && AppData[1] == 0xFF) //---->ATZ
+            {
+                ESP.restart();
+            }
+            if (AppData_Len == 2 && AppData[1] == 0xFE) //---->AT+FDR
+            {
+                sys.DATA_CLEAR();
+                ESP.restart();
+            }      
+        }
+        break;    
+        case 0x05:
+        {
+            store_flag = true;
+            if (AppData_Len == 2 && AppData[1] == 0x01) //---->AT+CFM=1
+            {
+                sys.frame_flag =1;
+            }
+            else if(AppData_Len == 2 && AppData[1] == 0x00) //---->AT+CFM=0
+            {
+                sys.frame_flag =0;
+            }      
+        }    
+        break;
+        case 0x20:
+        {
+            store_flag = true;
+            if (AppData_Len == 2 && AppData[1] == 0x01) //---->AT+NJM=1
+            {
+                sys.njm =1;
+            }
+            else if(AppData_Len == 2 && AppData[1] == 0x00) //---->AT+NJM=0
+            {
+                sys.njm =0;
+            }  
+            ESP.restart();    
+        }    
+        break;    
+        case 0x22:
+        {
+            store_flag = true;
+            if(( AppData_Len == 2 )&&(AppData[1]==0x01))   //---->AT+ADR=1
+            {   
+                LMIC_setAdrMode(0);
+                bool _adr = 0;
+                sys.LORA_SetADR(_adr);
+            }
+            else if(( AppData_Len == 4 )&&(AppData[1]==0x00)) //---->AT+ADR=0
+            {
+                LMIC_setAdrMode(1);
+                bool _adr = 1;
+                bool _dr = AppData[2];
+                sys.LORA_SetADR(_adr);
+                sys.LORA_SetDR(_dr);
+                LMIC_setDrTxpow(sys.LORA_GetDR(),sys.LORA_GetTXP());
+                sys.config_Write();                
+                if(AppData[3]==0xFF)
+                {
+                    ESP.restart();
+                }
+            }
+        }
+        break;
+        case 0x23:
+        {
+            store_flag = true;
+            if(( AppData_Len == 2 )&&(AppData[1]==0x01)) 
+            {
+                sys.gps_start = 1;
+                Serial.println("device");
+                sys.device_flag = 1;
+                sys.collect_sensor_flag = false;
+            }
+        }    
+        break;
+        case 0x24:
+        {
+            #if defined( CFG_us915 ) ||defined( CFG_au915 ) 
+            store_flag = true;
+            if( AppData_Len == 2 )
+            {
+                sys.channel_single = AppData[1];
+                LMIC_selectSubBand(sys.channel_single);
+            }
+            #endif 
+        }    
+        break;   
+        case 0x25:
+        {
+            #if defined( CFG_as923 ) ||defined( CFG_au915 ) 
+            store_flag = true;
+            if( AppData_Len == 2 )
+            {
+                sys.Dwelltime = AppData[1];
+            }
+            #endif 
+        }    
+        break;   
+        case 0x34:
+        {
+            store_flag = true;
+            if( AppData_Len == 2 )
+            {
+                sys.PNACKmd = AppData[1];
+                if(AppData[1] == 0)
+                {
+                    sys.frame_flag = 0;
+                }
+                else
+                {
+                    sys.frame_flag = 1;
+                }        
+            }
+        }    
+        break;        
+        case 0xa5:
+        {
+            store_flag = true;
+            if(AppData_Len == 2 )//AT+MD = 1
+            {
+                sys.mod = AppData[1];
+                sys.save_mode = AppData[1];
+            }
+            if(AppData_Len == 4 )//AT+SMOD = 1,0
+            {
+                sys.sensor_mode = AppData[1];
+                sys.save_sensor_mode = AppData[1];
+                sys.mod = AppData[2];
+                sys.save_mode = AppData[2];
+                sys.ble_mod = AppData[3];
+                sys.save_ble_mode = AppData[3];          
+            }
+        }
+        break;
+        case 0xaa:
+        {
+            store_flag = true;
+            if( AppData_Len == 3 )
+            {
+                sys.Positioning_time = (AppData[1]<<8 |AppData[2]);
+                sys.Positioning_time = sys.Positioning_time*1000;
+            }
+        }
+        break;
+        case 0xab:
+        {
+            store_flag = true;
+            if( AppData_Len == 2 )
+            {
+                sys.fr_mode = AppData[1];
+            }
+        }
+        break;  
+        case 0xac:
+        {
+            store_flag = true;
+            if( AppData_Len == 2 )
+            {
+                sys.se_mode = AppData[1];
+            }
+        }
+        break;  
+        case 0xad:
+        {
+            store_flag = true;
+            if( AppData_Len == 3 )
+            {
+                sys.pdop_value = (AppData[1]<<8 | AppData[2])/10.0;
+            }
+        }
+        break;   
+        case 0xae:
+        {
+            store_flag = true;
+            if( AppData_Len == 2 )
+            {
+                sys.lon = AppData[1];
+            }
+        }
+        break;  
+        case 0xaf:
+        {
+            store_flag = true;
+            if( AppData_Len == 2 )
+            {
+                sys.Intwk = AppData[1];
+            }
+        }
+        break;  
+        case 0xb1:
+        {
+            if (AppData_Len == 4) //---->AT+ATDC
+            {
+                uint32_t ServerSetTDC = (AppData[1] << 16 | AppData[2] << 8 | AppData[3]); // S
+                if (ServerSetTDC < 6)
+                {
+                    Serial.println("Invalid parameter");
+                }
+                else
+                {
+                    store_flag = true;
+                    sys.atdc = ServerSetTDC * 1000;
+                }
+            }
+        }
+        break;  
+        case 0xb2:
+        {
+            store_flag = true;
+            if (AppData_Len <= 11) //---->AT+BLEMASK
+            {
+                for(int a=1,b=0;a < AppData_Len;a++)
+                {
+                    sys.blemask_data[b++] =AppData[a]+'0';
+                }
+            }
+        }
+        break;   
+        case 0xb3:
+        {
+            store_flag = true;
+            if (AppData_Len <= 11) //---->AT+BLEMASK
+            {
+                for(int a=1,b=0;a < AppData_Len;a++)
+                {
+                    sys.wifimask_data[b++] =AppData[a]+'0';
+                }
+            }
+        }
+        break;       
+        case 0xb4:
+        {
+            store_flag = true;
+            if (AppData_Len == 2) //---->AT+PT
+            {
+                sys.TF[0] =AppData[1];
+            }
+        }
+        break;  
+        case 0xb5:
+        {
+            store_flag = true;
+            if (AppData_Len == 2) //---->AT+PM
+            {
+                sys.atst =AppData[1];
+            }
+        }
+        break;     
+        case 0xb6:
+        {
+            store_flag = true;
+            if (AppData_Len == 2) //---->AT+PM
+            {
+                sys.pedometer =AppData[1];
+            }
+        }
+        break; 
+        case 0xb7:
+        {
+            store_flag = true;
+            if (AppData_Len == 2) //---->AT+FD
+            {
+                sys.fall_detection =AppData[1];
+            }
+        }
+        break;  
+        case 0xb8:
+        {
+            store_flag = true;
+            if (AppData_Len == 2) //---->AT+BG
+            {
+                sys.ble_gps =AppData[1];
+            }
+        }
+        break;
+        case 0xb9:
+        {
+            store_flag = true;
+            if (AppData_Len == 2) //---->AT+BEEP
+            {
+                sys.beep_flag =AppData[1];
+            }
+        }
+        break;    
+        case 0xba:
+        {
+            store_flag = true;
+            if (AppData_Len == 2) //---->AT+EAT
+            {
+                sys.exit_alarm_time =AppData[1];
+                sys.exit_alarm_time =sys.exit_alarm_time*1000;
+            }
+        }
+        break;                               
+        case 0x99: // Custom command identifier (e.g., 0x99)
+        {
+            if (AppData_Len > 1) // Ensure there is at least one additional byte
+            {
+                // Extract the last character from the payload
+                uint8_t lastByte = AppData[AppData_Len - 1];
+
+                // Displays values recieved for debugging purposes
+                for ( int i = AppData_Len - 1; i >= 0; i--) {
+                  uint8_t value = AppData[i];
+                  Serial.print(i);
+                  Serial.print(": ");
+                  Serial.printf("%02X", value);
+                  Serial.println();
+                }
+                Serial.printf("Last byte (hex): %02X\n", lastByte);
+
+                // Extract the lower nibble (last hex character)
+                uint8_t lowerNibble = lastByte & 0x0F; // Mask upper 4 bits
+                int decimalValue = lowerNibble; // Directly use the nibble's value (0-15)
+                
+                // Print the decimal value
+                Serial.print("Decimal value of last nibble: ");
+                Serial.println(decimalValue);
             }
             else
             {
-              digitalWrite(LED_PIN_BLUE, HIGH);             
+                Serial.println("Invalid payload length for custom command.");
             }
-            if (millis() - Exit_Alarm > 5000)
-            {
-              if(sys.sensor_type == 22)  
-              {              
-                digitalWrite(LED_PIN_BLUE1, LOW);
-              }
-              else
-              {
-                digitalWrite(LED_PIN_BLUE, LOW);             
-              }
-              Exit_Alarm = millis();
-            }   
-          } 
-          if(sys.Intwk == 1)
-          {
-             LIS3DH_configIntterupts();
-             sys.keep_flag = 0;         
-          }           
-          Serial.println("Exit Alarm");          
-      }
-      if(( AppData_Len == 2 )&&(AppData[1]==0x02)) 
-      {
-          buzzer(); 
-//          sys.device_flag =1;
-          sys.gps_work_flag=false; 
-          sys.collect_sensor_flag=false; 
-          os_run_flag=false;
-          os_JOINED_flag = 1  ;
-          
-          if(sys.sensor_type == 22)  
-          {              
-            digitalWrite(LED_PIN_RED1, HIGH);
-            delay(1000); 
-            digitalWrite(LED_PIN_RED1, LOW);
-          }
-          else
-          {
-            digitalWrite(LED_PIN_RED, HIGH);
-            delay(1000); 
-            digitalWrite(LED_PIN_RED, LOW);                
-          }  
-          Stop_buzzer();          
-      }
-      if(( AppData_Len == 2 )&&(AppData[1]==0x03)) 
-      {
-          buzzer();          
-          if(sys.sensor_type == 22)  
-          {              
-            digitalWrite(LED_PIN_RED1, HIGH);
-            delay(1000); 
-            digitalWrite(LED_PIN_RED1, LOW);
-          }
-          else
-          {
-            digitalWrite(LED_PIN_RED, HIGH);
-            delay(1000); 
-            digitalWrite(LED_PIN_RED, LOW);                
-          }  
-          delay(29000);
-          Stop_buzzer();          
-      }      
-    }
-    break;  
-    case 0x03:
-    {
-      if (AppData_Len == 4) //---->AT+MTDC
-      {
-        uint32_t ServerSetTDC = (AppData[1] << 16 | AppData[2] << 8 | AppData[3]); // S
-        if (ServerSetTDC < 6)
-        {
-          Serial.println("Invalid parameter");
         }
-        else
-        {
-          store_flag = true;
-          sys.mtdc = ServerSetTDC * 1000;
-        }
-      }
-    }
-    break;       
-    case 0x04:
-    {
-      if (AppData_Len == 2 && AppData[1] == 0xFF) //---->ATZ
-      {
-        ESP.restart();
-      }
-      if (AppData_Len == 2 && AppData[1] == 0xFE) //---->AT+FDR
-      {
-        sys.DATA_CLEAR();
-        ESP.restart();
-      }      
-    }
-    break;    
-    case 0x05:
-    {
-      store_flag = true;
-      if (AppData_Len == 2 && AppData[1] == 0x01) //---->AT+CFM=1
-      {
-        sys.frame_flag =1;
-      }
-      else if(AppData_Len == 2 && AppData[1] == 0x00) //---->AT+CFM=0
-      {
-        sys.frame_flag =0;
-      }      
-    }    
-    break;
-    case 0x20:
-    {
-      store_flag = true;
-      if (AppData_Len == 2 && AppData[1] == 0x01) //---->AT+NJM=1
-      {
-        sys.njm =1;
-      }
-      else if(AppData_Len == 2 && AppData[1] == 0x00) //---->AT+NJM=0
-      {
-        sys.njm =0;
-      }  
-      ESP.restart();    
-    }    
-    break;    
-    case 0x22:
-    {
-      store_flag = true;
-      if(( AppData_Len == 2 )&&(AppData[1]==0x01))   //---->AT+ADR=1
-      {   
-        LMIC_setAdrMode(0);
-        bool _adr = 0;
-        sys.LORA_SetADR(_adr);
-      }
-      else if(( AppData_Len == 4 )&&(AppData[1]==0x00)) //---->AT+ADR=0
-      {
-        LMIC_setAdrMode(1);
-        bool _adr = 1;
-        bool _dr = AppData[2];
-        sys.LORA_SetADR(_adr);
-        sys.LORA_SetDR(_dr);
-        LMIC_setDrTxpow(sys.LORA_GetDR(),sys.LORA_GetTXP());
-        sys.config_Write();                
-        if(AppData[3]==0xFF)
-        {
-          ESP.restart();
-        }
-      }
-    }
-    break;
-    case 0x23:
-    {
-      store_flag = true;
-      if(( AppData_Len == 2 )&&(AppData[1]==0x01)) 
-      {
-        sys.gps_start = 1;
-        Serial.println("device");
-        sys.device_flag = 1;
-        sys.collect_sensor_flag = false;
-      }
-    }    
-    break;
-    case 0x24:
-    {
-      #if defined( CFG_us915 ) ||defined( CFG_au915 ) 
-      store_flag = true;
-      if( AppData_Len == 2 )
-      {
-        sys.channel_single = AppData[1];
-        LMIC_selectSubBand(sys.channel_single);
-      }
-      #endif 
-    }    
-    break;   
-    case 0x25:
-    {
-      #if defined( CFG_as923 ) ||defined( CFG_au915 ) 
-      store_flag = true;
-      if( AppData_Len == 2 )
-      {
-        sys.Dwelltime = AppData[1];
-      }
-      #endif 
-    }    
-    break;   
-    case 0x34:
-    {
-      store_flag = true;
-      if( AppData_Len == 2 )
-      {
-        sys.PNACKmd = AppData[1];
-        if(AppData[1] == 0)
-        {
-           sys.frame_flag = 0;
-        }
-        else
-        {
-          sys.frame_flag = 1;
-        }        
-      }
-    }    
-    break;        
-    case 0xa5:
-    {
-       store_flag = true;
-       if(AppData_Len == 2 )//AT+MD = 1
-       {
-        sys.mod = AppData[1];
-        sys.save_mode = AppData[1];
-       }
-       if(AppData_Len == 4 )//AT+SMOD = 1,0
-       {
-        sys.sensor_mode = AppData[1];
-        sys.save_sensor_mode = AppData[1];
-        sys.mod = AppData[2];
-        sys.save_mode = AppData[2];
-        sys.ble_mod = AppData[3];
-        sys.save_ble_mode = AppData[3];          
-       }
-    }
-    break;
-    case 0xaa:
-    {
-      store_flag = true;
-      if( AppData_Len == 3 )
-      {
-        sys.Positioning_time = (AppData[1]<<8 |AppData[2]);
-        sys.Positioning_time = sys.Positioning_time*1000;
-      }
-    }
-    break;
-    case 0xab:
-    {
-      store_flag = true;
-      if( AppData_Len == 2 )
-      {
-        sys.fr_mode = AppData[1];
-      }
-    }
-    break;  
-    case 0xac:
-    {
-      store_flag = true;
-      if( AppData_Len == 2 )
-      {
-        sys.se_mode = AppData[1];
-      }
-    }
-    break;  
-    case 0xad:
-    {
-      store_flag = true;
-      if( AppData_Len == 3 )
-      {
-        sys.pdop_value = (AppData[1]<<8 | AppData[2])/10.0;
-      }
-    }
-    break;   
-    case 0xae:
-    {
-      store_flag = true;
-      if( AppData_Len == 2 )
-      {
-        sys.lon = AppData[1];
-      }
-    }
-    break;  
-    case 0xaf:
-    {
-      store_flag = true;
-      if( AppData_Len == 2 )
-      {
-        sys.Intwk = AppData[1];
-      }
-    }
-    break;  
-    case 0xb1:
-    {
-      if (AppData_Len == 4) //---->AT+ATDC
-      {
-        uint32_t ServerSetTDC = (AppData[1] << 16 | AppData[2] << 8 | AppData[3]); // S
-        if (ServerSetTDC < 6)
-        {
-          Serial.println("Invalid parameter");
-        }
-        else
-        {
-          store_flag = true;
-          sys.atdc = ServerSetTDC * 1000;
-        }
-      }
-    }
-    break;  
-    case 0xb2:
-    {
-      store_flag = true;
-      if (AppData_Len <= 11) //---->AT+BLEMASK
-      {
-        for(int a=1,b=0;a < AppData_Len;a++)
-        {
-          sys.blemask_data[b++] =AppData[a]+'0';
-        }
-      }
-    }
-    break;   
-    case 0xb3:
-    {
-      store_flag = true;
-      if (AppData_Len <= 11) //---->AT+BLEMASK
-      {
-        for(int a=1,b=0;a < AppData_Len;a++)
-        {
-          sys.wifimask_data[b++] =AppData[a]+'0';
-        }
-      }
-    }
-    break;       
-    case 0xb4:
-    {
-      store_flag = true;
-      if (AppData_Len == 2) //---->AT+PT
-      {
-       sys.TF[0] =AppData[1];
-      }
-    }
-    break;  
-    case 0xb5:
-    {
-      store_flag = true;
-      if (AppData_Len == 2) //---->AT+PM
-      {
-       sys.atst =AppData[1];
-      }
-    }
-    break;     
-    case 0xb6:
-    {
-      store_flag = true;
-      if (AppData_Len == 2) //---->AT+PM
-      {
-       sys.pedometer =AppData[1];
-      }
-    }
-    break; 
-    case 0xb7:
-    {
-      store_flag = true;
-      if (AppData_Len == 2) //---->AT+FD
-      {
-       sys.fall_detection =AppData[1];
-      }
-    }
-    break;  
-    case 0xb8:
-    {
-      store_flag = true;
-      if (AppData_Len == 2) //---->AT+BG
-      {
-       sys.ble_gps =AppData[1];
-      }
-    }
-    break;
-    case 0xb9:
-    {
-      store_flag = true;
-      if (AppData_Len == 2) //---->AT+BEEP
-      {
-       sys.beep_flag =AppData[1];
-      }
-    }
-    break;    
-    case 0xba:
-    {
-      store_flag = true;
-      if (AppData_Len == 2) //---->AT+EAT
-      {
-       sys.exit_alarm_time =AppData[1];
-       sys.exit_alarm_time =sys.exit_alarm_time*1000;
-      }
-    }
-    break;                               
- //...
-    default:
-      Serial.println("Unknown instruction");
-      break;
-  }
+        break;
 
-  if (store_flag == true)
-  {
-    sys.config_Write();
-  }
+        default:
+            Serial.println("Unknown instruction");
+            break;
+    }
+
+    if (store_flag == true)
+    {
+        sys.config_Write();
+    }
 }
 
 int hexToint(char *str)
