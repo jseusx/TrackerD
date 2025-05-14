@@ -1483,28 +1483,28 @@ void StrToHex(uint8_t *pbDest, char *pszSrc, int nLen)
   }
 }
 
-void SYS::writeToBuffer(const TrackerDLS_GPS& entry) {
+void SYS::writeToBuffer(const Sensor& entry) {
   // If the buffer is full, overwrite the oldest entry
   if (bufferIsFull) {
     bufferTail = (bufferTail + 1) % BUFFER_SIZE;
   }
 
   // Write the new entry to the buffer
-  gpsBuffer[bufferHead] = entry;
+  sensorBuffer[bufferHead] = entry;
   bufferHead = (bufferHead + 1) % BUFFER_SIZE;
 
   // Update the full flag
   bufferIsFull = (bufferHead == bufferTail);
 }
 
-SYS::TrackerDLS_GPS SYS::readFromBuffer() {
+Sensor SYS::readFromBuffer() {
   if (isBufferEmpty()) {
     // Return a default entry if the buffer is empty
-    return {0, 0, 0, 0};
+    return Sensor();
   }
 
   // Read the oldest entry from the buffer
-  TrackerDLS_GPS entry = gpsBuffer[bufferTail];
+  Sensor entry = sensorBuffer[bufferTail];
   bufferTail = (bufferTail + 1) % BUFFER_SIZE;
 
   // Update the full flag
