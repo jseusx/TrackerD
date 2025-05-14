@@ -1482,3 +1482,41 @@ void StrToHex(uint8_t *pbDest, char *pszSrc, int nLen)
     pbDest[i] = s1 * 16 + s2;
   }
 }
+
+void SYS::writeToBuffer(const TrackerDLS_GPS& entry) {
+  // If the buffer is full, overwrite the oldest entry
+  if (bufferIsFull) {
+    bufferTail = (bufferTail + 1) % BUFFER_SIZE;
+  }
+
+  // Write the new entry to the buffer
+  gpsBuffer[bufferHead] = entry;
+  bufferHead = (bufferHead + 1) % BUFFER_SIZE;
+
+  // Update the full flag
+  bufferIsFull = (bufferHead == bufferTail);
+}
+
+SYS::TrackerDLS_GPS SYS::readFromBuffer() {
+  if (isBufferEmpty()) {
+    // Return a default entry if the buffer is empty
+    return {0, 0, 0, 0};
+  }
+
+  // Read the oldest entry from the buffer
+  TrackerDLS_GPS entry = gpsBuffer[bufferTail];
+  bufferTail = (bufferTail + 1) % BUFFER_SIZE;
+
+  // Update the full flag
+  bufferIsFull = false;
+
+  return entry;  
+}
+
+bool SYS::isBufferEmpty() {
+  return (!bufferIsFull && (bufferHead == bufferTail));
+}
+
+bool SYS::isBufferFull() {
+  return bufferIsFull;
+}
