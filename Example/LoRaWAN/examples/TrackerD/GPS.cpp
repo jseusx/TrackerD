@@ -105,7 +105,7 @@ bool GPS_DATA(void)
 
             fmps = gps.speed.mps();
             sensor.fmps=(int)(fmps*100);
-            
+          
             Serial.printf("Latitude = %0.6f\n\r",latitude);
             Serial.printf("Longitude = %0.6f\n\r",longitude);
             Serial.printf("m/s== %0.2f\n\r",fmps);
@@ -132,7 +132,10 @@ bool GPS_DATA(void)
             {
               sensor.bat = BatGet(); 
               sys.gps_data_buff[i++] = (sensor.bat>>8)        & 0xFF;
-              sys.gps_data_buff[i++] = (sensor.bat)           & 0xFF;  
+              sys.gps_data_buff[i++] = (sensor.bat)           & 0xFF;
+              
+              // Write Sensor object to circular buffer
+              sys.writeToBuffer(sensor);
             }             
 
                 //            sys.gps_data_Weite();
