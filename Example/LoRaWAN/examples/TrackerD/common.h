@@ -35,6 +35,8 @@
 #define CUSTOM_MOVE_DETECT_MODE     0x03
 #define GXHT3x_MODE                 0x04
 
+#define BUFFER_SIZE    5
+
 class SYS:public LORA
 {
   public:   
@@ -130,7 +132,27 @@ class SYS:public LORA
     float       pdop_value = 7.0;
     int         data_read = 0;
     bool        gps_work_flag = true;
-    bool        collect_sensor_flag = false; 
+    bool        collect_sensor_flag = false;
+
+    // May be able to not do this since Sensor structure already exists.
+    // For testing will do it for now
+    struct TrackerDLS_GPS {
+      int32_t latitude;     // Raw latitude (° * 1e6)
+        int32_t longitude;    // Raw longitude (° * 1e6)
+        uint16_t alarmBat;    // 1 bit alarm, 14 bits battery (mV)
+        uint8_t flags;        // MOD (bits 7-6), LON indicator (bit 5)
+    };
+
+    TrackerDLS_GPS gpsBuffer[BUFFER_SIZE]; // Circular buffer array
+    size_t bufferHead = 0;                 // Head index
+    size_t bufferTail = 0;                 // Tail index
+    bool bufferIsFull = false;             // Buffer full flag
+
+    // Circular buffer methods
+    void writeToBuffer(const TrackerDLS_GPS& entry);
+    TrackerDLS_GPS readFromBuffer();
+    bool isBufferEmpty();
+    bool isBufferFull();
        
   private: 
 };
