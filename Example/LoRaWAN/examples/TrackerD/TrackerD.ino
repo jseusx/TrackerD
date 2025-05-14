@@ -698,7 +698,9 @@ void do_send(osjob_t* j)
     {
       int i = 0;
       // Prepare upstream data transmission at the next possible time.
-      memset(mydata,0,50);    
+      memset(mydata, 0, 50);
+      
+      
       if(sys.save_sensor_mode == 3)
       {
         if(sys.exti_flag == 4)
@@ -1009,6 +1011,7 @@ void do_send(osjob_t* j)
     }
     // Next TX is scheduled after TX_COMPLETE event.    
 }
+
 void device_send(osjob_t* j)
 {
     // Check if there is not a current TX/RX job running
@@ -2728,36 +2731,71 @@ if(sys.lon == 1)
                 sys.exit_alarm_time =sys.exit_alarm_time*1000;
             }
         }
-        break;                               
-        case 0x99: // Custom command identifier (e.g., 0x99)
+        break; 
+        // Custom command identifier (e.g., 0x99)                              
+        case 0x99: // Buffer offload mode | When coming in range
         {
-            if (AppData_Len > 1) // Ensure there is at least one additional byte
+          if (AppData_Len > 1) // Ensure there is at least one additional byte
+          {
+            // Displays values recieved for debugging purposes
+            for ( int i = AppData_Len - 1; i >= 0; i--) {
+              uint8_t value = AppData[i];
+              Serial.print(i);
+              Serial.print(": ");
+              Serial.printf("%02X", value);
+              Serial.println();
+            }
+            // Extract the lower nibble (last hex character)
+            //uint8_t lowerNibble = lastByte & 0x0F; // Mask upper 4 bits
+            //int decimalValue = lowerNibble; // Directly use the nibble's value (0-15)
+            if (!sys.isBufferEmpty())
             {
-                // Extract the last character from the payload
-                uint8_t lastByte = AppData[AppData_Len - 1];
+              Serial.println("Unloading buffer...");
 
-                // Displays values recieved for debugging purposes
-                for ( int i = AppData_Len - 1; i >= 0; i--) {
-                  uint8_t value = AppData[i];
-                  Serial.print(i);
-                  Serial.print(": ");
-                  Serial.printf("%02X", value);
-                  Serial.println();
+              // Iterate through the buffer and send each entry
+              while (!sys.isBufferEmpty())
+              {
+                Sensor sensorEntry = sys.readFromBuffer();
+  
+                // Prepare the payload
+                 int i = 0;
+                memset(mydata, 0, sizeof(mydata));
+                mydata[i++] = (sensorEntry.latitude >> 24) & 0xFF;
+                mydata[i++] = (sensorEntry.latitude >> 16) & 0xFF;
+                mydata[i++] = (sensorEntry.latitude >> 8) & 0xFF;
+                mydata[i++] = sensorEntry.latitude & 0xFF;
+                mydata[i++] = (sensorEntry.longitude >> 24) & 0xFF;
+                mydata[i++] = (sensorEntry.longitude >> 16) & 0xFF;
+                mydata[i++] = (sensorEntry.longitude >> 8) & 0xFF;
+                mydata[i++] = sensorEntry.longitude & 0xFF;
+                mydata[i++] = (sensorEntry.bat >> 8) & 0xFF;
+                mydata[i++] = sensorEntry.bat & 0xFF;
+  
+                // Add additional fields if needed
+                mydata[i++] = ((sys.alarm << 6) | (sensorEntry.fmps >> 8)) & 0xFF;
+                mydata[i++] = sensorEntry.fmps & 0xFF;
+
+                // Send the payload
+                LMIC_setTxData2(sys.port, mydata, i, sys.frame_flag);
+                Serial.println(F("Packet queued for uplink"));
+
+                // Wait for the TX_COMPLETE event before sending the next packet
+                while (!(LMIC.opmode & OP_TXRXPEND)) {
+                  os_runloop_once();
                 }
-                Serial.printf("Last byte (hex): %02X\n", lastByte);
+              }
 
-                // Extract the lower nibble (last hex character)
-                uint8_t lowerNibble = lastByte & 0x0F; // Mask upper 4 bits
-                int decimalValue = lowerNibble; // Directly use the nibble's value (0-15)
-                
-                // Print the decimal value
-                Serial.print("Decimal value of last nibble: ");
-                Serial.println(decimalValue);
+              Serial.println("Buffer offloading complete.");
             }
             else
             {
-                Serial.println("Invalid payload length for custom command.");
+              Serial.println("Buffer is empty, nothing to unload.");
             }
+          }
+          else
+          {
+            Serial.println("Invalid payload length for custom command.");
+          }
         }
         break;
 
